@@ -11,7 +11,7 @@ namespace gbcsharp
         static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateLogger();
-            AssemblyFile file = AssemblyFile.FromFile("../seelstage.asm");
+            AssemblyFile file = AssemblyFile.FromFile(args[0]);
             List<TrackChunk> chunks = new List<TrackChunk>();
 
             chunks.Add(new TrackChunk()); //Contains Tempo Information
@@ -25,7 +25,7 @@ namespace gbcsharp
             }
 
             MidiFile midi = new MidiFile(chunks);
-            midi.Write("test.mid", true);
+            midi.Write(args[1], true);
             
         }
     }
