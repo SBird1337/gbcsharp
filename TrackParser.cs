@@ -8,12 +8,21 @@ namespace gbcsharp
 {
     public class TrackParser
     {
+        public struct VolumeEnvelope
+        {
+            public int Volume;
+            public int Fade;
+        }
         private const int BPM_PRESCALE = 2;
         private AssemblyFile _assembly;
         private int _channel;
         private int _baseNoteLength;
         private int _transposeOctave;
         private int _transposePitch;
+
+        private int _dutyCycle;
+
+        private VolumeEnvelope _envelope;
 
         private long _time;
         private int _octave;
@@ -33,6 +42,9 @@ namespace gbcsharp
             _baseNoteLength = 1;
             _transposeOctave = 0;
             _transposePitch = 0;
+            _envelope.Fade = 0;
+            _envelope.Volume = 15;
+            _dutyCycle = 2;
 
             ParseSegment(startLine, tracks);
         }
@@ -119,7 +131,7 @@ namespace gbcsharp
                 break;
             case "octave":
                 {
-                    _octave = int.Parse(parameters[0]);
+                    _octave = int.Parse(parameters[0]) + 1;
                 }
                 break;
             case "transpose":
@@ -141,6 +153,56 @@ namespace gbcsharp
                 {
                     _baseNoteLength = int.Parse(parameters[0]);
                     //TODO: fade/wave, volume
+                }
+                break;
+            case "volume_envelope":
+                {
+                    _envelope.Volume = int.Parse(parameters[0]);
+                    _envelope.Fade = int.Parse(parameters[1]);
+
+                    if(_channel == 1 || _channel == 2)
+                    {
+                        if(_envelope.Fade == 8)
+                            _envelope.Fade = 0;
+                        if(_envelope.Fade < 0 || _envelope.Fade > 8)
+                            throw new System.Exception("volume_envelope fade out of range");
+                        using(TimedEventsManager manager = tracks[_channel].ManageTimedEvents())
+                        {
+                            TimedEventsCollection events = manager.Events;
+                            events.AddEvent(new ControlChangeEvent((SevenBitNumber)7, (SevenBitNumber)(_envelope.Volume * 127 / 15)), _time * BPM_PRESCALE);
+                            SevenBitNumber programChangeNumber = (SevenBitNumber)((_channel-1)*32 + _envelope.Fade * 4 + _dutyCycle);
+                            events.AddEvent(new ProgramChangeEvent(programChangeNumber), _time * BPM_PRESCALE);
+                        }
+                    }
+                    else if(_channel == 3)
+                    {
+                        if(_envelope.Fade < 0)
+                            throw new System.Exception("volume_envelope wave_instrument out of range");
+                        int[] volumeList = {0,127,64,32};
+                        using(TimedEventsManager manager = tracks[_channel].ManageTimedEvents())
+                        {
+                            TimedEventsCollection events = manager.Events;
+                            events.AddEvent(new ControlChangeEvent((SevenBitNumber)7, (SevenBitNumber)volumeList[_envelope.Volume]), _time * BPM_PRESCALE);
+                            events.AddEvent(new ProgramChangeEvent((SevenBitNumber)(64 + _envelope.Fade)), _time * BPM_PRESCALE);
+                        }
+                    }
+                    else
+                    {
+                        throw new System.Exception("volume_envelope command in channel not 1-3");
+                    }
+                }
+                break;
+            case "duty_cycle":
+                {
+                    if(_channel > 2)
+                        throw new System.Exception("duty_cycle command in channel not 1-2");
+                    _dutyCycle = int.Parse(parameters[0]);
+                    using(TimedEventsManager manager = tracks[_channel].ManageTimedEvents())
+                    {
+                        TimedEventsCollection events = manager.Events;
+                        SevenBitNumber programChangeNumber = (SevenBitNumber)((_channel-1)*32 + _envelope.Fade * 4 + _dutyCycle);
+                        events.AddEvent(new ProgramChangeEvent(programChangeNumber), _time * BPM_PRESCALE);
+                    }
                 }
                 break;
             default:
