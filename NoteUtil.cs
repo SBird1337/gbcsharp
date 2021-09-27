@@ -40,9 +40,9 @@ namespace gbcsharp
             }
         }
         
-        public static SevenBitNumber TransposeByOctaveAndPitch(this NoteName note, int octave, int transposeOctave, int transposePitch)
+        public static SevenBitNumber TransposeByOctaveAndPitch(this NoteName note, int octave, int transposeOctave, int transposePitch, int pitchOffset)
         {
-            return (SevenBitNumber)(Convert.ToInt32(note) + 12 * octave + 12 * transposeOctave + transposePitch);
+            return (SevenBitNumber)(Convert.ToInt32(note) + 12 * octave + 12 * transposeOctave + transposePitch + pitchOffset);
         }
     }
 }
