@@ -1,6 +1,7 @@
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.MusicTheory;
 using System;
+using Serilog;
 
 namespace gbcsharp
 {
@@ -33,7 +34,7 @@ namespace gbcsharp
             case "A#":
                 return NoteName.ASharp;
             case "B_":
-                return NoteName.ASharp;
+                return NoteName.B;
             default:
                 throw new Exception($"Unknown Note representation: {representation}");
             }
