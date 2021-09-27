@@ -19,7 +19,6 @@ namespace gbcsharp
         private int _baseNoteLength;
         private int _transposeOctave;
         private int _transposePitch;
-        private int _pitchOffset;
 
         private int _dutyCycle;
 
@@ -45,7 +44,6 @@ namespace gbcsharp
             _transposePitch = 0;
             _envelope.Fade = 0;
             _envelope.Volume = 15;
-            _pitchOffset = 0;
             _dutyCycle = 2;
 
             ParseSegment(startLine, tracks);
@@ -109,7 +107,7 @@ namespace gbcsharp
                     using (NotesManager notesManager = tracks[_channel].ManageNotes())
                     {
                         NotesCollection notes = notesManager.Notes;
-                        notes.Add(new Note(noteName.TransposeByOctaveAndPitch( _octave, _transposeOctave, _transposePitch, _pitchOffset), length * _baseNoteLength * BPM_PRESCALE, _time * BPM_PRESCALE));
+                        notes.Add(new Note(noteName.TransposeByOctaveAndPitch( _octave, _transposeOctave, _transposePitch), length * _baseNoteLength * BPM_PRESCALE, _time * BPM_PRESCALE));
                     }
                     _time += length * _baseNoteLength;
                 }
@@ -205,13 +203,6 @@ namespace gbcsharp
                         SevenBitNumber programChangeNumber = (SevenBitNumber)((_channel-1)*32 + _envelope.Fade * 4 + _dutyCycle);
                         events.AddEvent(new ProgramChangeEvent(programChangeNumber), _time * BPM_PRESCALE);
                     }
-                }
-                break;
-            case "pitch_offset":
-                {
-                    if(_channel > 3)
-                        throw new System.Exception("pitch_offset command in channel not 1-3");
-                    _pitchOffset = int.Parse(parameters[0]);
                 }
                 break;
             default:
