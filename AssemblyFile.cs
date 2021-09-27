@@ -72,6 +72,14 @@ namespace gbcsharp
             return outputDictionary;
         }
 
+        public string GetSymbolName(string line)
+        {
+            Match m = _symbolRegex.Match(line);
+            if(m.Success)
+                return m.Groups[1].Value;
+            throw new System.Exception($"line is not a symbol: {line}");
+        }
+
         public bool IsSymbol(string line)
         {
             Match m = _symbolRegex.Match(line);
